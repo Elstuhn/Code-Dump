@@ -1,0 +1,72 @@
+from ursina import *
+from ursina.prefabs.first_person_controller import FirstPersonController
+import time
+import psd_tools
+import os
+print(os.getcwd())
+window.title = "Testing Game"
+window.exit_button_visible = True
+window.fps_counter_enabled = True 
+window.fullscreen = True
+ftime = time.time()
+def start():
+  print('debug')
+  global info
+  info = Text(text="A Game Made By Elston", size = 1400, x=-.3, enabled = False)
+  info.scale = 2
+  info.appear(speed=0.25, delay=1)
+
+def checkkeys(held_keys):
+  if held_keys['right arrow'] and held_keys['up arrow']:
+    camera.rotation_y += time.dt * 45
+    camera.rotation_x += time.dt * 45
+    
+  elif held_keys['left arrow'] and held_keys['down arrow']:
+    camera.rotation_y -= time.dt * 45
+    camera.rotation_x -= time.dt * 45
+
+  elif held_keys['right arrow']:
+    camera.rotation_y += time.dt * 45
+  elif held_keys['up arrow']:
+    camera.rotation_x += time.dt * 45
+  elif held_keys['down arrow']:
+    camera.rotation_x -= time.dt * 45
+  elif held_keys['left arrow']:
+    camera.rotation_y -= time.dt * 45
+  elif held_keys['w']:
+    camera.position += (0, 0, time.dt)
+  elif held_keys['s']:
+    camera.position -= (0, 0, time.dt)
+  elif held_keys['a']:
+    camera.position -= (time.dt, 0, 0)
+  elif held_keys['d']:
+    camera.position += (time.dt, 0, 0)
+
+_ = True
+check = True
+def update():
+  global ftime, info, _, check
+  if _:
+    start()
+    _ = False
+  cube.rotation_y += time.dt*10
+  cube.rotation_x += time.dt*10
+  stime = time.time()
+  if stime-ftime >= 9 and stime-ftime<27: 
+    camera.position -= (0, time.dt, 0)
+    info.position += (0, time.dt*0.095)
+  elif stime-ftime >= 27 and check:
+    text2 = Text(text="SwordTale", scale = 4, enabled = False, position = (-0.3, 0, 0))
+    text2.appear(speed=0.25, delay = 0.5)
+    text3 = Text(text = "An MMORPG Game", scale = 2, enabled = False, position = (-0.28, -0.2, 0), scale_override = 1)
+    text3.appear(speed=0.3, delay = 3)
+    text3.enable()
+    check = False   
+  
+
+#cube = Entity(model='cube', color=color.red, scale=(5,5,5))
+Text.default_resolution = 1080 * Text.size
+cube = Entity(model='cube', color = color.red, scale = (5,5,5), texture = "brick")
+plane = Entity(model='plane', color = color.green, scale = (25, 25, 120), position = (0, -20, 0))
+app = Ursina()
+app.run()
