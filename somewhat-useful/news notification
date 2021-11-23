@@ -1,0 +1,132 @@
+import requests
+from bs4 import BeautifulSoup 
+import csv
+import webbrowser
+from time import sleep, time
+import asyncio
+from win10toast_click import ToastNotifier
+toast = ToastNotifier()
+cont = True
+def soupgenerator(topic):
+    if topic == "space" : url = "https://www.space.com/news"
+    elif topic == "ai" : url = "https://artificialintelligence-news.com/"
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, "html.parser")
+    return soup
+
+def space(soup, show = True, retarticle = False):
+    global spacelist
+    articles = soup.find_all(class_ = "article-name") #get text
+    times = soup.find_all(class_ = "no-wrap relative-date chunk") # get text
+    descriptions = soup.find_all(class_ = "synopsis") # get text
+    spacelist = soup.find_all(class_ = "article-link")
+    spacelist = [html.get('href') for html in spacelist]
+    count = 0
+    if show:
+        for i in articles:
+            print(f"{count+1}. {i.get_text()}\n{descriptions[count].get_text()}\nPosted: {times[count].get_text()}")
+            count += 1
+            print("\n")
+            sleep(0.8)
+    if retarticle:
+        return articles
+    
+def ai(soup, show = True, retarticle = False):
+    global ailist
+    test = soup.find_all("h3")
+    ailist = [] #links
+    articles = []
+    descriptions = []
+    for i in test:
+        try:
+            ailist.append(i.find('a').get('href'))
+            articles.append(i.get_text()[1:-1])
+        except:
+            break
+    test = soup.find_all(class_ = "grid-x grid-margin-x")
+    for i in test:
+        i = i.find_all('p')
+        if not len(i):
+            continue
+        text = i[0].get_text()
+        if text == test[-1].find_all('p')[0].get_text():
+            continue
+        if text[-1] != " " : text = text[:-11]
+        if text[0] == "\n" : text = text[1:]
+        descriptions.append(text)
+    count = 0
+    if show:
+        for names in articles:
+            print(f"{count+1}. {names}")
+            count += 1
+            sleep(0.8)
+    if retarticle:
+        return articles
+        
+async def main():
+    global cont
+    print("\nType '(topic) (number)' to open up the page for that topic number.\nType 'topics' to view all topics.\nType a topic name to view all its updates.\nType exit to quit\n")
+    await asyncio.sleep(1)
+    inp = input()
+    if inp == "exit":
+        cont = False
+        return
+    elif inp == "topics":
+        print("\nList of Topics:\nSpace\nAI")
+    elif len(inp.split()) == 2:
+        inp = inp.split()
+        try:
+            #exec(f"webbrowser.get('C:/Program Files/Google/Chrome/Application/chrome.exe %s').open({inp[0].lower()}list[{int(inp[1])-1}])")
+            openbrowser(f"{inp[0].lower()}list[{int(inp[1])-1}]")
+        except:
+            print("An Error has occured!")
+    else:
+        if inp.lower() == "space":
+            space(soupgenerator("space"))
+        elif inp.lower() == "ai":
+            ai(soupgenerator("ai"))
+    await asyncio.sleep(0.5)
+
+def openbrowser(link):
+    webbrowser.get("C:/Program Files/Google/Chrome/Application/chrome.exe %s").open(link)
+    return
+
+async def periodic():
+    global ftime
+    curtime = time()
+    if (curtime - ftime) >= 3600:
+        latestai = ailist[0]
+        latestspace = spacelist[0]
+        aiarticle = ai(soupgenerator("ai"), False, True)
+        spacearticle = space(soupgenerator("space"), False, True)
+        for topic in ["space", "ai"]:
+            if eval(f"latest{topic} == {topic}list[0]"):
+                continue
+            else:
+                list_ = f"{topic}list"
+                article = f"{topic}article"
+                count = 0
+                for link in eval(list_):
+                    if link == latestai:
+                        break
+                    else:
+                        toast.show_toast(f"New information from {topic} click to see.", f"{eval(article)[count]}", duration = 20, callback_on_click = lambda: openbrowser(eval(list_)[count]))
+                        count += 1
+
+    await asyncio.sleep(1)
+
+async def maincover():
+    while cont:
+        await main()
+        
+async def loopcover():
+    while cont:
+        await periodic()
+
+async def truemain():
+    await asyncio.gather(maincover(), loopcover())
+    
+ai(soupgenerator("ai"), False)
+space(soupgenerator("space"), False)
+ftime = time()
+asyncio.run(truemain())
