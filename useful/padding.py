@@ -1,3 +1,6 @@
+from typing import Tuple
+import numpy as np
+
 def padding(image : ndarray, wantedshape : Tuple[int, int]): #wanted shape should be bigger than image shape
     curshape = image.shape
     if curshape >= wantedshape:
